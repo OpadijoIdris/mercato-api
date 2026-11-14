@@ -1,9 +1,11 @@
 import ProductRepository from '../repository/ProductRepository.js';
 import AppError from '../../util/AppError.js';
-import type { CreateProductInput, Product } from '../models/Product.js';
+import { paginate, type Paginated } from '../../util/pagination.js';
+import type { CreateProductInput, ListProductsQuery, Product } from '../models/Product.js';
 
-async function listAll(): Promise<Product[]> {
-  return ProductRepository.listAll();
+async function list(query: ListProductsQuery): Promise<Paginated<Product>> {
+  const { items, total } = await ProductRepository.list(query);
+  return paginate(items, total, query);
 }
 
 async function getById(id: string): Promise<Product> {
@@ -21,4 +23,4 @@ async function create(input: CreateProductInput): Promise<Product> {
   });
 }
 
-export default { listAll, getById, create };
+export default { list, getById, create };

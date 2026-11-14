@@ -88,6 +88,14 @@ Only repositories (and `src/database/`) import Prisma. Services and controllers 
 
 Always use `ResponseService.json()` for success responses. Never `res.json()` directly.
 
+### Pagination
+
+Every list endpoint is paginated and returns `data: { items, pagination: { page, limit, total,
+totalPages } }`. Use `src/util/pagination.ts`: spread `pageQueryFields` into the Joi query schema,
+extend `PageQuery` for the query type, use `toSkipTake()` in the repository (with a stable
+`orderBy`, e.g. `createdAt desc, id asc`), and `paginate()` in the service. Never return a bare,
+unbounded array from a list endpoint.
+
 ### Error Handling
 
 ```ts
@@ -169,6 +177,7 @@ All must pass: `typecheck`, `lint`, `format:check`, `test`, `build`.
 | Response formatting     | `src/util/response.ts`                           |
 | Error class             | `src/util/AppError.ts`                           |
 | Validation helper       | `src/util/validate.ts`                           |
+| Pagination (list APIs)  | `src/util/pagination.ts`                         |
 | Logger                  | `src/util/appLogger.ts`, `src/middleware/log.ts` |
 | Config                  | `src/config/env.ts`                              |
 | OpenAPI spec            | `src/docs/openapi.ts`                            |
@@ -177,7 +186,7 @@ All must pass: `typecheck`, `lint`, `format:check`, `test`, `build`.
 ## Endpoints Reference
 
 - `GET /`, `GET /health` — Health check
-- `GET /products`, `POST /products`, `GET /products/:id`
+- `GET /products` (paginated: `page`, `limit`, `search`), `POST /products`, `GET /products/:id`
 - `GET /users` (paginated: `page`, `limit`, `role`, `search`), `POST /users`
 - `GET|PATCH|DELETE /users/:id`
 - `GET /docs` — API reference

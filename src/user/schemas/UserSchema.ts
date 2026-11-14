@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { pageQueryFields } from '../../util/pagination.js';
 import { ROLES } from '../constants/Roles.js';
 import type { CreateUserInput, ListUsersQuery, UpdateUserInput } from '../models/User.js';
 
@@ -32,8 +33,7 @@ export const updateUserSchema = Joi.object<UpdateUserInput>({
 }).min(1);
 
 export const listUsersQuerySchema = Joi.object<ListUsersQuery>({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
+  ...pageQueryFields,
   role: Joi.string().valid(...ROLES),
   search: Joi.string().trim().max(100).empty(''),
 });

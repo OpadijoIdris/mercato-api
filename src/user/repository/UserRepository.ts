@@ -1,6 +1,7 @@
 import prisma from '../../database/prisma.js';
 import { withUniqueGuard } from '../../database/errors.js';
 import type { Prisma } from '../../database/generated/client.js';
+import { toSkipTake } from '../../util/pagination.js';
 import type { CreateUserInput, ListUsersQuery, UpdateUserInput, User } from '../models/User.js';
 
 function buildWhere(filter: Pick<ListUsersQuery, 'role' | 'search'>): Prisma.UserWhereInput {
@@ -25,8 +26,7 @@ async function list(query: ListUsersQuery): Promise<{ items: User[]; total: numb
     prisma.user.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-      skip: (query.page - 1) * query.limit,
-      take: query.limit,
+      ...toSkipTake(query),
     }),
     prisma.user.count({ where }),
   ]);

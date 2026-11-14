@@ -9,13 +9,32 @@ const envelope = (data: Record<string, unknown>) => ({
   },
 });
 
+// Shared by every list endpoint (see src/util/pagination.ts).
+const pageParams = [
+  { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+  {
+    name: 'limit',
+    in: 'query',
+    schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+  },
+];
+
+const paginated = (itemRef: string) => ({
+  type: 'object',
+  properties: {
+    items: { type: 'array', items: { $ref: itemRef } },
+    pagination: { $ref: '#/components/schemas/Pagination' },
+  },
+});
+
 const openapi = {
   openapi: '3.1.0',
   info: {
     title: 'Mercato API',
     version: '1.0.0',
     description:
-      'Product catalogue API. Every response uses the { status, message, data } envelope.',
+      'Mercato e-commerce API. Every response uses the { status, message, data } envelope, ' +
+      'and every list endpoint is paginated as { items, pagination }.',
   },
   servers: [{ url: config.apiUrl, description: 'API server' }],
   paths: {
@@ -29,19 +48,26 @@ const openapi = {
     '/products': {
       get: {
         tags: ['Products'],
-        summary: 'List products (newest first)',
+        summary: 'List products (paginated, newest first)',
+        parameters: [
+          ...pageParams,
+          {
+            name: 'search',
+            in: 'query',
+            description: 'Case-insensitive match on product name',
+            schema: { type: 'string' },
+          },
+        ],
         responses: {
           '200': {
             description: 'Products',
             content: {
               'application/json': {
-                schema: envelope({
-                  type: 'array',
-                  items: { $ref: '#/components/schemas/Product' },
-                }),
+                schema: envelope(paginated('#/components/schemas/Product')),
               },
             },
           },
+          '400': { description: 'Invalid query parameters' },
         },
       },
       post: {
@@ -87,12 +113,7 @@ const openapi = {
         tags: ['Users'],
         summary: 'List users (paginated, newest first)',
         parameters: [
-          { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
-          {
-            name: 'limit',
-            in: 'query',
-            schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-          },
+          ...pageParams,
           { name: 'role', in: 'query', schema: { $ref: '#/components/schemas/Role' } },
           {
             name: 'search',
@@ -106,7 +127,7 @@ const openapi = {
             description: 'Users',
             content: {
               'application/json': {
-                schema: envelope({ $ref: '#/components/schemas/PaginatedUsers' }),
+                schema: envelope(paginated('#/components/schemas/User')),
               },
             },
           },
@@ -198,19 +219,13 @@ const openapi = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
-      PaginatedUsers: {
+      Pagination: {
         type: 'object',
         properties: {
-          items: { type: 'array', items: { $ref: '#/components/schemas/User' } },
-          pagination: {
-            type: 'object',
-            properties: {
-              page: { type: 'integer' },
-              limit: { type: 'integer' },
-              total: { type: 'integer' },
-              totalPages: { type: 'integer' },
-            },
-          },
+          page: { type: 'integer' },
+          limit: { type: 'integer' },
+          total: { type: 'integer', description: 'Items matching the filters, across all pages' },
+          totalPages: { type: 'integer' },
         },
       },
       CreateUserInput: {

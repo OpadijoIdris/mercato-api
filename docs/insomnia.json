@@ -238,10 +238,15 @@
       "_type": "request",
       "parentId": "fld_products",
       "name": "List products",
+      "description": "Tick `search` in the Params tab to filter by name.",
       "method": "GET",
       "url": "{{ _.base_url }}/products",
       "headers": [],
-      "parameters": [],
+      "parameters": [
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" },
+        { "name": "search", "value": "shirt", "disabled": true }
+      ],
       "body": {},
       "metaSortKey": 1
     },

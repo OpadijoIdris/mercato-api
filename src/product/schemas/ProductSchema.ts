@@ -1,5 +1,6 @@
 import Joi from 'joi';
-import type { CreateProductInput } from '../models/Product.js';
+import { pageQueryFields } from '../../util/pagination.js';
+import type { CreateProductInput, ListProductsQuery } from '../models/Product.js';
 
 // Numbers are strict so "100" (a string) is rejected rather than silently coerced.
 export const createProductSchema = Joi.object<CreateProductInput>({
@@ -7,4 +8,10 @@ export const createProductSchema = Joi.object<CreateProductInput>({
   description: Joi.string().trim().max(5000).empty('').allow(null).optional(),
   price: Joi.number().integer().min(0).strict().required(),
   stock: Joi.number().integer().min(0).strict().optional(),
+});
+
+// Query strings are always strings, so numbers here are coerced (not strict).
+export const listProductsQuerySchema = Joi.object<ListProductsQuery>({
+  ...pageQueryFields,
+  search: Joi.string().trim().max(100).empty(''),
 });

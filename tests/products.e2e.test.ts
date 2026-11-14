@@ -20,9 +20,16 @@ describe('products API', () => {
     });
     const id = created.body.data.id;
 
-    const list = await request(app).get('/products');
+    const list = await request(app).get('/products?page=1&limit=10&search=t-SHIRT');
     expect(list.status).toBe(200);
-    expect(list.body.data.map((p: { id: string }) => p.id)).toContain(id);
+    expect(list.body.data.items.map((p: { id: string }) => p.id)).toEqual([id]);
+    expect(list.body.data.pagination).toEqual({ page: 1, limit: 10, total: 1, totalPages: 1 });
+
+    const defaults = await request(app).get('/products');
+    expect(defaults.body.data.pagination).toMatchObject({ page: 1, limit: 20 });
+
+    expect((await request(app).get('/products?limit=500')).status).toBe(400);
+    expect((await request(app).get('/products?page=0')).status).toBe(400);
 
     const fetched = await request(app).get(`/products/${id}`);
     expect(fetched.status).toBe(200);

@@ -21,10 +21,23 @@ describe('ProductService', () => {
     await expect(ProductService.getById(MISSING_ID)).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it('lists products newest first', async () => {
-    await ProductService.create({ name: 'First', price: 1 });
-    await ProductService.create({ name: 'Second', price: 2 });
-    const names = (await ProductService.listAll()).map((p) => p.name);
-    expect(names).toEqual(['Second', 'First']);
+  it('lists products newest first, a page at a time', async () => {
+    for (const name of ['First', 'Second', 'Third'])
+      await ProductService.create({ name, price: 1 });
+
+    const page1 = await ProductService.list({ page: 1, limit: 2 });
+    expect(page1.items.map((p) => p.name)).toEqual(['Third', 'Second']);
+    expect(page1.pagination).toEqual({ page: 1, limit: 2, total: 3, totalPages: 2 });
+
+    const page2 = await ProductService.list({ page: 2, limit: 2 });
+    expect(page2.items.map((p) => p.name)).toEqual(['First']);
+  });
+
+  it('searches product names case-insensitively, counting only matches', async () => {
+    await ProductService.create({ name: 'Classic T-shirt', price: 1 });
+    await ProductService.create({ name: 'Denim Jacket', price: 1 });
+    const result = await ProductService.list({ page: 1, limit: 20, search: 'shirt' });
+    expect(result.items.map((p) => p.name)).toEqual(['Classic T-shirt']);
+    expect(result.pagination.total).toBe(1);
   });
 });

@@ -83,7 +83,7 @@ src/
   middleware/              Logging and error-handling middleware
   routes/                  One router per resource, mounted in routes/index.ts
   <domain>/                controllers/ services/ repository/ models/ schemas/
-  util/                    AppError, response envelope, validation, logger
+  util/                    AppError, response envelope, validation, logger, pagination
   docs/openapi.ts          OpenAPI spec served at /docs
 database/postgres/         Prisma schema and SQL migrations
 docs/                      Insomnia collection
@@ -121,7 +121,7 @@ environment. It contains every endpoint with example bodies, plus deliberate err
 | GET    | `/users/:id`    | Get a user                                     |
 | PATCH  | `/users/:id`    | Update a user                                  |
 | DELETE | `/users/:id`    | Delete a user                                  |
-| GET    | `/products`     | List products                                  |
+| GET    | `/products`     | List products (`page`, `limit`, `search`)      |
 | POST   | `/products`     | Create a product                               |
 | GET    | `/products/:id` | Get a product                                  |
 
