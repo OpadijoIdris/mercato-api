@@ -86,7 +86,7 @@ Only repositories (and `src/database/`) import Prisma. Services and controllers 
 { status: 'success' | 'failed', message: string, data: any }
 ```
 
-Always use `ResponseService.json()` / `ResponseService.resolveError()`. Never `res.json()` directly.
+Always use `ResponseService.json()` for success responses. Never `res.json()` directly.
 
 ### Error Handling
 
@@ -94,9 +94,18 @@ Always use `ResponseService.json()` / `ResponseService.resolveError()`. Never `r
 throw new AppError(404, 'Product not found');
 ```
 
-`resolveError` maps `AppError` to its status code, malformed JSON bodies to 400, and anything
-else to a logged 500 with a generic message. Controllers wrap their body in `try/catch` and call
-`ResponseService.resolveError(res, e)`.
+**Controllers don't catch.** Express 5 forwards a rejected async handler to the error middleware,
+so controllers are just validate → call service → `ResponseService.json()`. Don't add
+`try/catch` to a controller unless it needs to handle a specific error itself.
+
+The error middleware (`src/middleware/error.ts` → `ResponseService.resolveError`) maps:
+
+- `AppError` → its status code and message
+- Express/body-parser 4xx errors (invalid JSON, payload too large) → their status
+- anything else → a generic 500 (never the internal message)
+
+`errorLogger` (`src/middleware/log.ts`) logs only 5xx errors, with request context. Expected 4xx
+outcomes already appear in the response log.
 
 ## Code Conventions
 

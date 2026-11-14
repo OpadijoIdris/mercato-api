@@ -41,4 +41,14 @@ describe('ResponseService', () => {
       data: null,
     });
   });
+
+  it('statusOf maps AppError, Express 4xx errors and unknown errors', () => {
+    expect(ResponseService.statusOf(new AppError(404, 'x'))).toBe(404);
+    expect(ResponseService.statusOf(Object.assign(new Error('too big'), { status: 413 }))).toBe(
+      413,
+    );
+    expect(ResponseService.statusOf(Object.assign(new Error('boom'), { status: 503 }))).toBe(500);
+    expect(ResponseService.statusOf(new Error('boom'))).toBe(500);
+    expect(ResponseService.statusOf('not even an error')).toBe(500);
+  });
 });
