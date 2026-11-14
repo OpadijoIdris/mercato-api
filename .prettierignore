@@ -1,5 +1,5 @@
 dist
 node_modules
-database/postgres/generated
+src/database/generated
 database/postgres/migrations
 package-lock.json

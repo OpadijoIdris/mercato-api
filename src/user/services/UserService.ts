@@ -1,14 +1,9 @@
 import UserRepository from '../repository/UserRepository.js';
-import { UniqueConstraintError } from '../../../database/postgres/errors.js';
+import { UniqueConstraintError } from '../../database/errors.js';
 import AppError from '../../util/AppError.js';
+import { paginate, type Paginated } from '../../util/pagination.js';
 import passwordUtil from '../../util/password.js';
-import type {
-  CreateUserInput,
-  ListUsersQuery,
-  Paginated,
-  UpdateUserInput,
-  User,
-} from '../models/User.js';
+import type { CreateUserInput, ListUsersQuery, UpdateUserInput, User } from '../models/User.js';
 
 const EMAIL_TAKEN = 'A user with this email already exists';
 
@@ -36,15 +31,7 @@ async function guardEmailConflict<T>(write: () => Promise<T>): Promise<T> {
 
 async function list(query: ListUsersQuery): Promise<Paginated<User>> {
   const { items, total } = await UserRepository.list(query);
-  return {
-    items,
-    pagination: {
-      page: query.page,
-      limit: query.limit,
-      total,
-      totalPages: Math.ceil(total / query.limit),
-    },
-  };
+  return paginate(items, total, query);
 }
 
 async function getById(id: string): Promise<User> {

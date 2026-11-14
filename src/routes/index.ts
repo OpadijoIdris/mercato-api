@@ -1,5 +1,5 @@
 import { Router, type Request, type Response } from 'express';
-import ResponseService from '../src/util/response.js';
+import ResponseService from '../util/response.js';
 import productRoutes from './product.js';
 import userRoutes from './user.js';
 

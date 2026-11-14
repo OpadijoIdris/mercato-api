@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import ResponseService from '../src/util/response.js';
+import ResponseService from '../util/response.js';
 
 export default function errorHandler(
   err: unknown,

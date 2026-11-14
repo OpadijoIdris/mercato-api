@@ -76,14 +76,17 @@ Some design decisions worth noting:
 ### Project structure
 
 ```
-app.ts, server.ts          Express app and HTTP server
-config/                    Environment configuration
-database/postgres/         Prisma schema, migrations, client
-middleware/                Logging and error-handling middleware
-routes/                    One router per resource, mounted in routes/index.ts
-src/<domain>/              controllers/ services/ repository/ models/ schemas/
-src/util/                  AppError, response envelope, validation, logger
-docs/                      OpenAPI spec, Insomnia collection
+src/
+  app.ts, server.ts        Express app and HTTP server
+  config/                  Environment configuration
+  database/                Prisma client and database error translation
+  middleware/              Logging and error-handling middleware
+  routes/                  One router per resource, mounted in routes/index.ts
+  <domain>/                controllers/ services/ repository/ models/ schemas/
+  util/                    AppError, response envelope, validation, logger, pagination
+  docs/openapi.ts          OpenAPI spec served at /docs
+database/postgres/         Prisma schema and SQL migrations
+docs/                      Insomnia collection
 tests/                     Unit and end-to-end tests
 ```
 
@@ -118,7 +121,7 @@ environment. It contains every endpoint with example bodies, plus deliberate err
 | GET    | `/users/:id`    | Get a user                                     |
 | PATCH  | `/users/:id`    | Update a user                                  |
 | DELETE | `/users/:id`    | Delete a user                                  |
-| GET    | `/products`     | List products                                  |
+| GET    | `/products`     | List products (`page`, `limit`, `search`)      |
 | POST   | `/products`     | Create a product                               |
 | GET    | `/products/:id` | Get a product                                  |
 
