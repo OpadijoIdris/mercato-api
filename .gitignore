@@ -2,3 +2,6 @@ node_modules
 dist
 .env
 src/database/generated
+
+# Private planning/handoff notes (docs/planning.md)
+docs/planning.*
