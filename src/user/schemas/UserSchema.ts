@@ -1,39 +1,51 @@
-import Joi from 'joi';
-import { pageQueryFields } from '../../util/pagination.js';
-import { ROLES } from '../constants/Roles.js';
-import type { CreateUserInput, ListUsersQuery, UpdateUserInput } from '../models/User.js';
+import { z } from 'zod';
+import { pageQueryShape } from '../../util/pagination.js';
+import { optionalText } from '../../util/validate.js';
+import { Role } from '../constants/Roles.js';
 
-const name = Joi.string().trim().min(1).max(100);
-// Loose E.164: optional +, then 7–15 digits.
-const phone = Joi.string()
+// Each schema is the single source of truth for its shape: the TypeScript type is inferred from
+// it, so validation and types can't drift apart.
+
+// Trimmed before the email check; the meta keeps `format: email` in the generated API docs.
+const email = z
+  .string()
   .trim()
-  .pattern(/^\+?[0-9]{7,15}$/)
-  .empty('')
-  .allow(null)
-  .messages({ 'string.pattern.base': '"phone" must be 7-15 digits, optionally starting with +' });
+  .meta({ format: 'email', maxLength: 254, example: 'jane.doe@example.com' })
+  .pipe(z.email().max(254));
+const name = z.string().trim().min(1).max(100);
+// Loose E.164: optional +, then 7–15 digits.
+const phone = optionalText(
+  z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9]{7,15}$/, 'must be 7-15 digits, optionally starting with +')
+    .meta({ example: '+2348012345678' }),
+);
 
-export const createUserSchema = Joi.object<CreateUserInput>({
-  email: Joi.string().trim().email().max(254).required(),
+export const createUserSchema = z.object({
+  email,
   // bcrypt only uses the first 72 bytes, so longer passwords would be silently truncated.
-  password: Joi.string().min(8).max(72).required(),
-  firstName: name.required(),
-  lastName: name.required(),
-  phone: phone.optional(),
-  role: Joi.string()
-    .valid(...ROLES)
-    .optional(),
-});
-
-export const updateUserSchema = Joi.object<UpdateUserInput>({
-  email: Joi.string().trim().email().max(254),
+  password: z.string().min(8).max(72),
   firstName: name,
   lastName: name,
   phone,
-  role: Joi.string().valid(...ROLES),
-}).min(1);
-
-export const listUsersQuerySchema = Joi.object<ListUsersQuery>({
-  ...pageQueryFields,
-  role: Joi.string().valid(...ROLES),
-  search: Joi.string().trim().max(100).empty(''),
+  role: z.enum(Role).optional(),
 });
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = z
+  .object({ email, firstName: name, lastName: name, phone, role: z.enum(Role) })
+  .partial()
+  .refine((values) => Object.values(values).some((v) => v !== undefined), {
+    message: 'Provide at least one field to update',
+  })
+  .meta({ minProperties: 1 });
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+
+export const listUsersQuerySchema = z.object({
+  ...pageQueryShape,
+  role: z.enum(Role).optional(),
+  // Case-insensitive match against email, first name and last name.
+  search: optionalText(z.string().trim().max(100)),
+});
+export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
