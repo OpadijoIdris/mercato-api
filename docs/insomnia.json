@@ -1,0 +1,261 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-14T00:00:00.000Z",
+  "__export_source": "mercato-api",
+  "resources": [
+    {
+      "_id": "wrk_ecommerce",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Mercato API",
+      "description": "Import into Insomnia, pick the Local environment, run `npm run dev`.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_ecommerce",
+      "name": "Base Environment",
+      "data": {}
+    },
+    {
+      "_id": "env_local",
+      "_type": "environment",
+      "parentId": "env_base",
+      "name": "Local",
+      "data": {
+        "base_url": "http://localhost:3000",
+        "user_id": "{% response 'body', 'req_users_create', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}",
+        "product_id": "{% response 'body', 'req_products_create', 'b64::JC5kYXRhLmlk::46b', 'never', 60 %}"
+      }
+    },
+
+    {
+      "_id": "fld_system",
+      "_type": "request_group",
+      "parentId": "wrk_ecommerce",
+      "name": "System",
+      "metaSortKey": 0
+    },
+    {
+      "_id": "req_health",
+      "_type": "request",
+      "parentId": "fld_system",
+      "name": "Health check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 0
+    },
+
+    {
+      "_id": "fld_users",
+      "_type": "request_group",
+      "parentId": "wrk_ecommerce",
+      "name": "Users",
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_users_create",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Create user",
+      "description": "Run this first: Get / Update / Delete user use the id it returns.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/users",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"jane.doe@example.com\",\n  \"password\": \"supersecret\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+2348012345678\"\n}"
+      },
+      "metaSortKey": 0
+    },
+    {
+      "_id": "req_users_create_admin",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Create admin user",
+      "method": "POST",
+      "url": "{{ _.base_url }}/users",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"supersecret\",\n  \"firstName\": \"Ada\",\n  \"lastName\": \"Admin\",\n  \"role\": \"ADMIN\"\n}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_users_list",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "List users",
+      "description": "Tick `role` or `search` in the Params tab to filter.",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users",
+      "headers": [],
+      "parameters": [
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" },
+        { "name": "role", "value": "ADMIN", "disabled": true },
+        { "name": "search", "value": "jane", "disabled": true }
+      ],
+      "body": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_users_get",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Get user",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_users_update",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Update user",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"lastName\": \"Smith\",\n  \"phone\": \"+2348098765432\"\n}"
+      },
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_users_delete",
+      "_type": "request",
+      "parentId": "fld_users",
+      "name": "Delete user",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 5
+    },
+
+    {
+      "_id": "fld_users_errors",
+      "_type": "request_group",
+      "parentId": "fld_users",
+      "name": "Error cases",
+      "metaSortKey": 6
+    },
+    {
+      "_id": "req_users_err_duplicate",
+      "_type": "request",
+      "parentId": "fld_users_errors",
+      "name": "409 - duplicate email (different case)",
+      "description": "Run after Create user.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/users",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"JANE.DOE@example.com\",\n  \"password\": \"supersecret\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Again\"\n}"
+      },
+      "metaSortKey": 0
+    },
+    {
+      "_id": "req_users_err_invalid",
+      "_type": "request",
+      "parentId": "fld_users_errors",
+      "name": "400 - invalid payload",
+      "method": "POST",
+      "url": "{{ _.base_url }}/users",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"short\"\n}"
+      },
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_users_err_query",
+      "_type": "request",
+      "parentId": "fld_users_errors",
+      "name": "400 - limit over 100",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users",
+      "headers": [],
+      "parameters": [{ "name": "limit", "value": "500" }],
+      "body": {},
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_users_err_missing",
+      "_type": "request",
+      "parentId": "fld_users_errors",
+      "name": "404 - unknown user",
+      "method": "GET",
+      "url": "{{ _.base_url }}/users/00000000-0000-0000-0000-000000000000",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 3
+    },
+
+    {
+      "_id": "fld_products",
+      "_type": "request_group",
+      "parentId": "wrk_ecommerce",
+      "name": "Products",
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_products_create",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Create product",
+      "description": "price is in the smallest currency unit: 500000 kobo = NGN 5,000.",
+      "method": "POST",
+      "url": "{{ _.base_url }}/products",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "parameters": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Classic T-shirt\",\n  \"description\": \"100% cotton\",\n  \"price\": 500000,\n  \"stock\": 25\n}"
+      },
+      "metaSortKey": 0
+    },
+    {
+      "_id": "req_products_list",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "List products",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_products_get",
+      "_type": "request",
+      "parentId": "fld_products",
+      "name": "Get product",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products/{{ _.product_id }}",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "metaSortKey": 2
+    }
+  ]
+}
