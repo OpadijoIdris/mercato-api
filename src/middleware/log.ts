@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import appLogger from '../src/util/appLogger.js';
-import type { AppRequest, AppResponse } from '../src/util/appLogger.js';
+import appLogger from '../util/appLogger.js';
+import type { AppRequest, AppResponse } from '../util/appLogger.js';
 
 export function requestLogger(req: Request, _res: Response, next: NextFunction): void {
   appLogger.withRequestContext(req);

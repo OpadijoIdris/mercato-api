@@ -3,7 +3,7 @@
   "plugins": ["typescript", "import", "vitest"],
   "categories": { "correctness": "error" },
   "env": { "node": true, "es2024": true },
-  "ignorePatterns": ["dist", "node_modules", "database/postgres/generated"],
+  "ignorePatterns": ["dist", "node_modules", "src/database/generated"],
   "rules": {
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "typescript/no-explicit-any": "error",

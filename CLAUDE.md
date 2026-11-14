@@ -36,26 +36,33 @@ routes/ → middleware/ → controllers/ → services/ → repository/ → datab
 
 ### Folder Layout
 
+All application code lives in `src/`; the root `database/` folder holds only database assets.
+
 ```
-app.ts                    Express app: middleware, /docs, routes, 404, error handler
-server.ts                 Starts the HTTP server, graceful shutdown
-config/env.ts             All env vars, read once
-database/postgres/
-  schema.prisma           Table definitions
-  migrations/             Prisma migrations
-  prisma.ts               Shared PrismaClient
-  generated/              Generated client (gitignored — `npm run db:generate`)
-middleware/               error.ts, log.ts (cross-cutting Express middleware)
-routes/                   index.ts mounts each router; one file per mount path
-src/<domain>/             One folder per domain, e.g. src/product/
-  controllers/            Validate (Joi) → call service → ResponseService
-  services/               Business logic, throws AppError
-  repository/             Thin Prisma wrapper
-  models/                 Row + input types for the domain
-  schemas/                Joi validation shapes
-  constants/              (when needed) enums / fixed values
-src/util/                 AppError, response (ResponseService), validate, appLogger
-docs/openapi.ts           OpenAPI 3.1 spec served at /docs
+src/
+  app.ts                  Express app: middleware, /docs, routes, 404, error handler
+  server.ts               Starts the HTTP server, graceful shutdown
+  config/env.ts           All env vars, read once
+  database/
+    prisma.ts             Shared PrismaClient
+    errors.ts             DB error translation (UniqueConstraintError, withUniqueGuard)
+    generated/            Generated client (gitignored — `npm run db:generate`)
+  middleware/             error.ts, log.ts (cross-cutting Express middleware)
+  routes/                 index.ts mounts each router; one file per mount path
+  <domain>/               One folder per domain, e.g. src/product/
+    controllers/          Validate (Joi) → call service → ResponseService
+    services/             Business logic, throws AppError
+    repository/           Thin Prisma wrapper
+    models/               Row + input types for the domain
+    schemas/              Joi validation shapes
+    constants/            (when needed) enums / fixed values
+  util/                   AppError, response (ResponseService), validate, appLogger
+  docs/openapi.ts         OpenAPI 3.1 spec served at /docs
+database/
+  postgres/schema.prisma  Table definitions
+  postgres/migrations/    Prisma migrations
+  init/                   Docker Postgres init scripts
+docs/                     Insomnia collection, specs
 tests/                    *.test.ts (unit) and *.e2e.test.ts (supertest), helpers/
 ```
 
@@ -70,7 +77,7 @@ tests/                    *.test.ts (unit) and *.e2e.test.ts (supertest), helper
 | Model      | Types for the domain's rows and inputs                                | Logic                  |
 | Schema     | Joi validation shape                                                  | Anything else          |
 
-Only repositories (and `database/`) import Prisma. Services and controllers import types from
+Only repositories (and `src/database/`) import Prisma. Services and controllers import types from
 `src/<domain>/models/`.
 
 ### Response Envelope
@@ -136,26 +143,27 @@ All must pass: `typecheck`, `lint`, `format:check`, `test`, `build`.
    - Service (business logic) — write test first
    - Repository
    - Controller (validate → call service → respond)
-   - Route (wire under `routes/`, mount in `routes/index.ts`)
+   - Route (wire under `src/routes/`, mount in `src/routes/index.ts`)
    - E2E test (supertest against `app`)
-4. **Update OpenAPI spec** in `docs/openapi.ts`
+4. **Update OpenAPI spec** in `src/docs/openapi.ts` (and `docs/insomnia.json`)
 5. **Verify** — `npm run typecheck && npm run lint && npm test && npm run build`
 6. **Open PR** into `develop` — description covers what, why, how verified
 
 ## Where to Look When Adding Code
 
-| Need                    | Reference                                     |
-| ----------------------- | --------------------------------------------- |
-| Existing domain to copy | `src/product/`                                |
-| Route mounting          | `routes/index.ts`, `routes/product.ts`        |
-| DB client               | `database/postgres/prisma.ts`                 |
-| Response formatting     | `src/util/response.ts`                        |
-| Error class             | `src/util/AppError.ts`                        |
-| Validation helper       | `src/util/validate.ts`                        |
-| Logger                  | `src/util/appLogger.ts`, `middleware/log.ts`  |
-| Config                  | `config/env.ts`                               |
-| OpenAPI spec            | `docs/openapi.ts`                             |
-| Tests to follow         | `tests/` (`helpers/db.ts` resets the test DB) |
+| Need                    | Reference                                        |
+| ----------------------- | ------------------------------------------------ |
+| Existing domain to copy | `src/product/`                                   |
+| Route mounting          | `src/routes/index.ts`, `src/routes/product.ts`   |
+| DB client               | `src/database/prisma.ts`                         |
+| DB error translation    | `src/database/errors.ts`                         |
+| Response formatting     | `src/util/response.ts`                           |
+| Error class             | `src/util/AppError.ts`                           |
+| Validation helper       | `src/util/validate.ts`                           |
+| Logger                  | `src/util/appLogger.ts`, `src/middleware/log.ts` |
+| Config                  | `src/config/env.ts`                              |
+| OpenAPI spec            | `src/docs/openapi.ts`                            |
+| Tests to follow         | `tests/` (`helpers/db.ts` resets the test DB)    |
 
 ## Endpoints Reference
 
@@ -167,7 +175,7 @@ All must pass: `typecheck`, `lint`, `format:check`, `test`, `build`.
 
 User routes are unauthenticated for now. When auth lands they move under `/admin` behind
 `authMiddleware` + `requireRole(ADMIN)`. Passwords are bcrypt-hashed and omitted from every Prisma
-query by default (`database/postgres/prisma.ts`).
+query by default (`src/database/prisma.ts`).
 
 ## Deviations from Branda
 
@@ -176,5 +184,7 @@ query by default (`database/postgres/prisma.ts`).
 - **Vitest instead of Jest, oxlint instead of ESLint** — TypeScript 7 is the native compiler with
   no JS API, which `ts-jest` and `typescript-eslint` need; Prisma 7's client is ESM-only.
 - **ESM** — imports carry `.js` extensions.
+- **All application code in `src/`** — Branda keeps `app.ts`, `routes/`, `middleware/` and
+  `config/` at the repo root; here they live in `src/` so the build compiles one folder.
 - **No Redis, auth, rate limiting or OpenTelemetry yet** — add them following Branda's
   `database/redis`, `middleware/auth.ts`, `middleware/ratelimit.ts`, `tracing.ts` when needed.

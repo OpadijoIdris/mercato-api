@@ -1,6 +1,6 @@
 // Prisma owns the table definition (database/postgres/schema.prisma). The rest of the user
 // domain imports its shapes from here instead of from the generated client.
-import type { User as UserRow } from '../../../database/postgres/generated/client.js';
+import type { User as UserRow } from '../../database/generated/client.js';
 import type { Role } from '../constants/Roles.js';
 
 // What queries return by default: the password hash is omitted at the client level.

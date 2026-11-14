@@ -1,6 +1,6 @@
-import prisma from '../../../database/postgres/prisma.js';
-import { withUniqueGuard } from '../../../database/postgres/errors.js';
-import type { Prisma } from '../../../database/postgres/generated/client.js';
+import prisma from '../../database/prisma.js';
+import { withUniqueGuard } from '../../database/errors.js';
+import type { Prisma } from '../../database/generated/client.js';
 import type { CreateUserInput, ListUsersQuery, UpdateUserInput, User } from '../models/User.js';
 
 function buildWhere(filter: Pick<ListUsersQuery, 'role' | 'search'>): Prisma.UserWhereInput {

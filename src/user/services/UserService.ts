@@ -1,5 +1,5 @@
 import UserRepository from '../repository/UserRepository.js';
-import { UniqueConstraintError } from '../../../database/postgres/errors.js';
+import { UniqueConstraintError } from '../../database/errors.js';
 import AppError from '../../util/AppError.js';
 import passwordUtil from '../../util/password.js';
 import type {

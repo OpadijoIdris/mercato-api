@@ -1,4 +1,4 @@
-import prisma from '../../../database/postgres/prisma.js';
+import prisma from '../../database/prisma.js';
 import type { CreateProductInput, Product } from '../models/Product.js';
 
 const findById = (id: string): Promise<Product | null> =>
