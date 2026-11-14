@@ -29,17 +29,17 @@ answers enquiries, including from visitors who aren't signed in.
 
 ## Tech stack
 
-| Area           | Choice                                                   |
-| -------------- | -------------------------------------------------------- |
-| Runtime        | Node.js 22, TypeScript 7 (strict), ES modules            |
-| Framework      | Express 5                                                |
-| Database       | PostgreSQL 16, Prisma 7                                  |
-| Validation     | Joi                                                      |
-| Logging        | winston (structured JSON, per-request correlation tags)  |
-| API docs       | OpenAPI 3.1 rendered with Scalar                         |
-| Testing        | Vitest + supertest against a real Postgres test database |
-| Code quality   | oxlint, Prettier, Husky git hooks, GitHub Actions CI     |
-| Local services | Docker Compose                                           |
+| Area           | Choice                                                    |
+| -------------- | --------------------------------------------------------- |
+| Runtime        | Node.js 22, TypeScript 7 (strict), ES modules             |
+| Framework      | Express 5                                                 |
+| Database       | PostgreSQL 16, Prisma 7                                   |
+| Validation     | Zod (schemas generate both the TS types and the API docs) |
+| Logging        | winston (structured JSON, per-request correlation tags)   |
+| API docs       | OpenAPI 3.1 rendered with Scalar                          |
+| Testing        | Vitest + supertest against a real Postgres test database  |
+| Code quality   | oxlint, Prettier, Husky git hooks, GitHub Actions CI      |
+| Local services | Docker Compose                                            |
 
 ## Architecture
 
@@ -52,7 +52,7 @@ routes → controllers → services → repositories → database
 | Layer            | Responsibility                                                          |
 | ---------------- | ----------------------------------------------------------------------- |
 | **Routes**       | Map URLs to controllers (and, soon, auth and role guards)               |
-| **Controllers**  | Validate input with Joi, call a service, send a consistent response     |
+| **Controllers**  | Validate input with Zod, call a service, send a consistent response     |
 | **Services**     | Business rules; throw `AppError(status, message)` for expected failures |
 | **Repositories** | Thin data-access wrappers over Prisma                                   |
 

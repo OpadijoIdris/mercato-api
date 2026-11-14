@@ -1,5 +1,6 @@
 import prisma from '../../database/prisma.js';
 import type { Prisma } from '../../database/generated/client.js';
+import { omitUndefined } from '../../database/omitUndefined.js';
 import { toSkipTake } from '../../util/pagination.js';
 import type { CreateProductInput, ListProductsQuery, Product } from '../models/Product.js';
 
@@ -25,6 +26,6 @@ async function list(query: ListProductsQuery): Promise<{ items: Product[]; total
 }
 
 const create = (values: CreateProductInput): Promise<Product> =>
-  prisma.product.create({ data: values });
+  prisma.product.create({ data: omitUndefined(values) });
 
 export default { findById, list, create };

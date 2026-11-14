@@ -1,4 +1,14 @@
+import { z } from 'zod';
 import config from '../config/env.js';
+import { createProductSchema } from '../product/schemas/ProductSchema.js';
+import { createUserSchema, updateUserSchema } from '../user/schemas/UserSchema.js';
+
+// Request bodies are generated from the same Zod schemas the controllers validate with, so the
+// docs can't drift from the real rules. `io: 'input'` describes what clients send.
+const requestSchema = (schema: z.ZodType) => {
+  const { $schema: _dialect, ...jsonSchema } = z.toJSONSchema(schema, { io: 'input' });
+  return jsonSchema;
+};
 
 const envelope = (data: Record<string, unknown>) => ({
   type: 'object',
@@ -228,29 +238,8 @@ const openapi = {
           totalPages: { type: 'integer' },
         },
       },
-      CreateUserInput: {
-        type: 'object',
-        required: ['email', 'password', 'firstName', 'lastName'],
-        properties: {
-          email: { type: 'string', format: 'email' },
-          password: { type: 'string', minLength: 8, maxLength: 72 },
-          firstName: { type: 'string', maxLength: 100 },
-          lastName: { type: 'string', maxLength: 100 },
-          phone: { type: ['string', 'null'], example: '+2348012345678' },
-          role: { $ref: '#/components/schemas/Role' },
-        },
-      },
-      UpdateUserInput: {
-        type: 'object',
-        minProperties: 1,
-        properties: {
-          email: { type: 'string', format: 'email' },
-          firstName: { type: 'string', maxLength: 100 },
-          lastName: { type: 'string', maxLength: 100 },
-          phone: { type: ['string', 'null'] },
-          role: { $ref: '#/components/schemas/Role' },
-        },
-      },
+      CreateUserInput: requestSchema(createUserSchema),
+      UpdateUserInput: requestSchema(updateUserSchema),
       Product: {
         type: 'object',
         properties: {
@@ -263,16 +252,7 @@ const openapi = {
           updatedAt: { type: 'string', format: 'date-time' },
         },
       },
-      CreateProductInput: {
-        type: 'object',
-        required: ['name', 'price'],
-        properties: {
-          name: { type: 'string', maxLength: 255 },
-          description: { type: ['string', 'null'], maxLength: 5000 },
-          price: { type: 'integer', minimum: 0, description: 'Smallest currency unit' },
-          stock: { type: 'integer', minimum: 0, default: 0 },
-        },
-      },
+      CreateProductInput: requestSchema(createProductSchema),
     },
   },
 };

@@ -20,7 +20,7 @@ under **Deviations from Branda** below.
 - **Runtime:** Node.js 22, TypeScript 7 (native compiler, strict mode), ESM (`"type": "module"`)
 - **Framework:** Express 5
 - **Database:** PostgreSQL 16 with Prisma 7 (`@prisma/adapter-pg`)
-- **Validation:** Joi 18
+- **Validation:** Zod 4 — schemas are the single source of truth; input types are `z.infer`red
 - **Logging:** winston (`src/util/appLogger.ts`) — request/response/error events joined by `tag`
 - **API Docs:** Scalar (`@scalar/express-api-reference`) at `/docs`
 - **Testing:** Vitest + supertest (test files run serially against a separate test DB)
@@ -50,11 +50,11 @@ src/
   middleware/             error.ts, log.ts (cross-cutting Express middleware)
   routes/                 index.ts mounts each router; one file per mount path
   <domain>/               One folder per domain, e.g. src/product/
-    controllers/          Validate (Joi) → call service → ResponseService
+    controllers/          Validate (Zod) → call service → ResponseService
     services/             Business logic, throws AppError
     repository/           Thin Prisma wrapper
     models/               Row + input types for the domain
-    schemas/              Joi validation shapes
+    schemas/              Zod schemas + the input types inferred from them
     constants/            (when needed) enums / fixed values
   util/                   AppError, response (ResponseService), validate, appLogger
   docs/openapi.ts         OpenAPI 3.1 spec served at /docs
@@ -71,14 +71,27 @@ tests/                    *.test.ts (unit) and *.e2e.test.ts (supertest), helper
 | Layer      | Responsibility                                                        | Must NOT               |
 | ---------- | --------------------------------------------------------------------- | ---------------------- |
 | Route      | Mount path (+ future auth/role gates, rate limiter)                   | Business logic         |
-| Controller | Validate input (Joi), call service, format response (ResponseService) | Query DB, domain rules |
+| Controller | Validate input (Zod), call service, format response (ResponseService) | Query DB, domain rules |
 | Service    | Business logic, transactions, throw AppError                          | Touch req/res          |
 | Repository | Thin wrapper over `prisma.<model>`                                    | Business rules, HTTP   |
-| Model      | Types for the domain's rows and inputs                                | Logic                  |
-| Schema     | Joi validation shape                                                  | Anything else          |
+| Model      | Row types; re-exports the input types inferred in `schemas/`          | Logic                  |
+| Schema     | Zod schema + `z.infer` input type                                     | Anything else          |
 
 Only repositories (and `src/database/`) import Prisma. Services and controllers import types from
 `src/<domain>/models/`.
+
+### Validation (Zod)
+
+- Never hand-write an input type: `export type CreateXInput = z.infer<typeof createXSchema>` next
+  to the schema, and re-export it from `models/`.
+- Body numbers are not coerced (`z.number()`), so `"100"` is rejected. Query params coerce
+  (`z.coerce.number()`), because query strings are always strings.
+- Optional text uses `optionalText()` (`src/util/validate.ts`): blank means absent, `null` clears.
+- Repositories pass inputs through `omitUndefined()` before a Prisma write, since Zod's
+  `field?: T | undefined` doesn't satisfy Prisma's types under `exactOptionalPropertyTypes`.
+- Request-body docs are generated from the schemas (`requestSchema()` in `src/docs/openapi.ts`).
+  Add `.meta({ example, description })` on a field to enrich the docs.
+- Integers stored in Postgres `INTEGER` columns need `.max(2_147_483_647)`.
 
 ### Response Envelope
 
@@ -91,7 +104,7 @@ Always use `ResponseService.json()` for success responses. Never `res.json()` di
 ### Pagination
 
 Every list endpoint is paginated and returns `data: { items, pagination: { page, limit, total,
-totalPages } }`. Use `src/util/pagination.ts`: spread `pageQueryFields` into the Joi query schema,
+totalPages } }`. Use `src/util/pagination.ts`: spread `pageQueryShape` into the Zod query schema,
 extend `PageQuery` for the query type, use `toSkipTake()` in the repository (with a stable
 `orderBy`, e.g. `createdAt desc, id asc`), and `paginate()` in the service. Never return a bare,
 unbounded array from a list endpoint.
@@ -119,7 +132,7 @@ outcomes already appear in the response log.
 
 - **One responsibility per file** — split controllers, services, repositories
 - **Depend inward, never outward** — lower layers never import upper layers
-- **Validate at the edge, trust inside** — Joi validation only in controllers
+- **Validate at the edge, trust inside** — Zod validation only in controllers
 - **No secrets in responses** — `password` stripped by ResponseService
 - **TypeScript strict** — no `any`, no `@ts-ignore`
 - **Modules:** controllers/services/repositories export a default object of functions
@@ -156,7 +169,7 @@ All must pass: `typecheck`, `lint`, `format:check`, `test`, `build`.
 3. **Implement** outside-in:
    - Schema change in `database/postgres/schema.prisma` + `npm run migrate:dev`
    - Model types (`src/<domain>/models/`)
-   - Joi schema
+   - Zod schema (+ `export type X = z.infer<typeof xSchema>`)
    - Service (business logic) — write test first
    - Repository
    - Controller (validate → call service → respond)
@@ -202,6 +215,8 @@ query by default (`src/database/prisma.ts`).
 - **Vitest instead of Jest, oxlint instead of ESLint** — TypeScript 7 is the native compiler with
   no JS API, which `ts-jest` and `typescript-eslint` need; Prisma 7's client is ESM-only.
 - **ESM** — imports carry `.js` extensions.
+- **Zod instead of Joi** — one schema gives runtime validation, the TypeScript type and the API
+  docs, so the three can't drift apart.
 - **All application code in `src/`** — Branda keeps `app.ts`, `routes/`, `middleware/` and
   `config/` at the repo root; here they live in `src/` so the build compiles one folder.
 - **No Redis, auth, rate limiting or OpenTelemetry yet** — add them following Branda's
