@@ -1,6 +1,6 @@
-import Joi from 'joi';
+import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
-import { paginate, pageQueryFields, toSkipTake } from '../src/util/pagination.js';
+import { paginate, pageQueryShape, toSkipTake } from '../src/util/pagination.js';
 
 describe('pagination helpers', () => {
   it('converts a page into Prisma skip/take', () => {
@@ -16,10 +16,11 @@ describe('pagination helpers', () => {
     expect(paginate([], 0, { page: 1, limit: 10 }).pagination.totalPages).toBe(0);
   });
 
-  it('defaults page/limit and coerces query-string numbers', () => {
-    const schema = Joi.object(pageQueryFields);
-    expect(schema.validate({}).value).toEqual({ page: 1, limit: 20 });
-    expect(schema.validate({ page: '2', limit: '5' }).value).toEqual({ page: 2, limit: 5 });
-    expect(schema.validate({ limit: '101' }).error).toBeDefined();
+  it('defaults page/limit, coerces query-string numbers and caps limit', () => {
+    const schema = z.object(pageQueryShape);
+    expect(schema.parse({})).toEqual({ page: 1, limit: 20 });
+    expect(schema.parse({ page: '2', limit: '5' })).toEqual({ page: 2, limit: 5 });
+    expect(schema.safeParse({ limit: '101' }).success).toBe(false);
+    expect(schema.safeParse({ page: 'abc' }).success).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import prisma from '../../database/prisma.js';
 import { withUniqueGuard } from '../../database/errors.js';
+import { omitUndefined } from '../../database/omitUndefined.js';
 import type { Prisma } from '../../database/generated/client.js';
 import { toSkipTake } from '../../util/pagination.js';
 import type { CreateUserInput, ListUsersQuery, UpdateUserInput, User } from '../models/User.js';
@@ -35,10 +36,10 @@ async function list(query: ListUsersQuery): Promise<{ items: User[]; total: numb
 
 // Both throw UniqueConstraintError if the email is already taken (users_email_key).
 const create = (values: CreateUserInput): Promise<User> =>
-  withUniqueGuard(() => prisma.user.create({ data: values }));
+  withUniqueGuard(() => prisma.user.create({ data: omitUndefined(values) }));
 
 const update = (id: string, values: UpdateUserInput): Promise<User> =>
-  withUniqueGuard(() => prisma.user.update({ where: { id }, data: values }));
+  withUniqueGuard(() => prisma.user.update({ where: { id }, data: omitUndefined(values) }));
 
 const remove = async (id: string): Promise<void> => {
   await prisma.user.delete({ where: { id } });
