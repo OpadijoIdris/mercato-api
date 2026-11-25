@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import UserController from '../src/user/controllers/UserController.js';
+import UserController from '../user/controllers/UserController.js';
 
 // TODO(auth): these are admin operations. Once auth lands, move them under /admin and gate
 // them with authMiddleware + requireRole(Role.ADMIN), as branda-core-api does.

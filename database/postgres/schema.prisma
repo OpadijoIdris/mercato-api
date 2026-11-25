@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "./generated"
+  output   = "../../src/database/generated"
 }
 
 datasource db {
@@ -39,5 +39,6 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([createdAt])
   @@map("products")
 }

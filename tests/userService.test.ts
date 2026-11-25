@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import prisma from '../database/postgres/prisma.js';
+import prisma from '../src/database/prisma.js';
 import UserRepository from '../src/user/repository/UserRepository.js';
 import UserService from '../src/user/services/UserService.js';
 import passwordUtil from '../src/util/password.js';

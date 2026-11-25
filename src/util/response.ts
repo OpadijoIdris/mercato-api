@@ -1,6 +1,5 @@
 import type { Response } from 'express';
 import AppError from './AppError.js';
-import appLogger from './appLogger.js';
 
 const SECRET_FIELDS = ['password'];
 
@@ -22,20 +21,42 @@ function json(res: Response, statusCode: number, message: string, data: unknown 
   return res.status(statusCode).json(body);
 }
 
-// express.json() raises this when the request body is not valid JSON.
-function isBodyParseError(err: unknown): boolean {
-  return (err as { type?: string } | null)?.type === 'entity.parse.failed';
+// Errors raised by Express itself and its body parser (http-errors): a 4xx status plus a message
+// that is safe to show the client (`expose`). E.g. invalid JSON, payload too large.
+interface HttpError {
+  status: number;
+  expose?: boolean;
+  type?: string;
+  message: string;
+}
+
+function isClientHttpError(err: unknown): err is HttpError {
+  const status = (err as { status?: unknown } | null)?.status;
+  return typeof status === 'number' && status >= 400 && status < 500;
+}
+
+// The HTTP status an error maps to. Anything unrecognised is a 500.
+function statusOf(err: unknown): number {
+  if (err instanceof AppError) return err.statusCode;
+  if (isClientHttpError(err)) return err.status;
+  return 500;
 }
 
 function resolveError(res: Response, err: unknown): Response {
   if (err instanceof AppError) {
     return json(res, err.statusCode, err.message, null);
   }
-  if (isBodyParseError(err)) {
-    return json(res, 400, 'Malformed JSON body', null);
+  if (isClientHttpError(err)) {
+    const message =
+      err.type === 'entity.parse.failed'
+        ? 'Malformed JSON body'
+        : err.expose
+          ? err.message
+          : 'Bad request';
+    return json(res, err.status, message, null);
   }
-  appLogger.logRawError(err, 'unhandled');
+  // Never leak internal details; the error middleware has already logged it.
   return json(res, 500, 'An error occurred', null);
 }
 
-export default { json, resolveError };
+export default { json, resolveError, statusOf };

@@ -4,7 +4,7 @@ import { apiReference } from '@scalar/express-api-reference';
 import routes from './routes/index.js';
 import { requestLogger, responseLogger, errorLogger } from './middleware/log.js';
 import errorHandler from './middleware/error.js';
-import ResponseService from './src/util/response.js';
+import ResponseService from './util/response.js';
 import openapi from './docs/openapi.js';
 
 const app = express();

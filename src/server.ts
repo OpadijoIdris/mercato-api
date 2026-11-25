@@ -1,6 +1,6 @@
 import app from './app.js';
 import config from './config/env.js';
-import prisma from './database/postgres/prisma.js';
+import prisma from './database/prisma.js';
 
 const server = app.listen(config.port, () => {
   console.log(`mercato-api listening on :${config.port} (${config.env})`);
